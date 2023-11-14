@@ -1,0 +1,47 @@
+﻿@page "/inventories"
+@attribute [Authorize]
+@inject IViewInventoriesByNameUseCase viewInventoriesByNameUseCase
+@inject NavigationManager navigationManager;
+<h3 class="bt-3">Inventory List</h3>
+<ViewInventoriesComponent OnSearchInventories="OnSearchInventories" ></ViewInventoriesComponent>
+@if (listInventories != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Inventory Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inv in this.listInventories)
+            {
+                <InventoryItemComponent Inventory="inv"></InventoryItemComponent>
+            }
+        </tbody>
+    </table>
+    <button type="button" class="btn btn-primary" @onclick="AddInventory">Add Inventory</button>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var invs = await this.viewInventoriesByNameUseCase.ExecuteAsync();
+        this.listInventories = invs.ToList();
+    }
+
+    private List<Inventory>? listInventories;
+
+    public void OnSearchInventories(List<Inventory> invs)
+    {
+        listInventories = invs;
+        StateHasChanged();
+    }
+    private void AddInventory(){
+        navigationManager.NavigateTo("/addinventory");
+    }
+   
+
+}

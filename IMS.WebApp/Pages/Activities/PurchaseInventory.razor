@@ -1,0 +1,52 @@
+﻿@page "/purchase"
+@attribute [Authorize]
+@inject IPurchaseInventoryUseCase purchaseInventoryUseCase
+@using IMS.WebApp.ViewModels
+<h3>Purchase Inventory</h3>
+<br />
+@if (purchaseViewModel != null)
+{
+    <EditForm Model="purchaseViewModel" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+        <div class="form-group">
+            <label for="po">Purchase order</label>
+            <InputText id="po" class="form-control" @bind-Value="purchaseViewModel.PuchaseOrder"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="inv">Inventory to purchase</label>
+            <ViewInventoriesComponent OnSelectInventory="OnSelectedInventory" DisplaySearchResult="true"></ViewInventoriesComponent>
+            <InputText class="form-control" @bind-Value="@purchaseViewModel.InventoryName" disabled></InputText>
+@*            <input type="text" class="form-control" disabled value="@SelectedInventory?.InventoryName" />
+*@            <input type="hidden" value="@purchaseViewModel.InventoryId" />
+            @if (SelectedInventory != null)
+            {
+                <text>Price:</text>
+                @SelectedInventory?.Price.ToString("c")
+            }
+        </div>
+        <div class="form-group">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" class="form-control" @bind-Value="purchaseViewModel.QuantityToPurchase"></InputNumber>
+           
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Purchase</button>
+    </EditForm>
+}
+@code {
+    private PurchaseViewModel purchaseViewModel = new PurchaseViewModel();
+    public Inventory? SelectedInventory;
+    private void OnSelectedInventory(Inventory inventory)
+    {
+        this.SelectedInventory = inventory;
+        this.purchaseViewModel.InventoryId=inventory.InventoryId;
+        this.purchaseViewModel.InventoryName = inventory.InventoryName;
+    } 
+    private async Task OnValidSubmit()
+    {
+        await this.purchaseInventoryUseCase.ExecuteAsync(this.purchaseViewModel.PuchaseOrder,this.SelectedInventory,this.purchaseViewModel.QuantityToPurchase,"Mark");
+        purchaseViewModel = new PurchaseViewModel();
+        SelectedInventory = null;
+    }
+
+}

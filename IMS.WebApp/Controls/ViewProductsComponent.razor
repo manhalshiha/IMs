@@ -1,0 +1,68 @@
+﻿@inject IViewProductsByNameUseCase ViewProductsByNameUseCase
+<div class="input-group mb-3">
+    <input type="text" 
+        class="form-control form-control-lg" 
+        placeholder="Type Product name to search "
+           @bind-value="_productNameToSearch"
+        @bind-value:event="oninput"/>
+
+    <button type="button" class="input-group-text btn-success" @onclick="ViewProducts">View</button>
+
+</div>
+@if (this.DisplaySearchResult && products != null && selectedProduct == null)
+{
+    <div style="overflow-y:auto; max-height:300px;border:1px solid silver;padding-top:5px;">
+        <ul style="list-style-type:none">
+            @foreach (var prod in this.products)
+            {
+                <li style="cursor:pointer" onmouseover="this.style.backgroundColor='grey';" onmouseout="this.style.backgroundColor='white';" @key="prod.ProductId" @onclick="(async()=>{await SelectProduct(prod);})">
+                    @prod.ProductName
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+
+@code {
+
+    private string? ProductNameToSearch;
+    private string? _productNameToSearch
+    {
+        get => ProductNameToSearch;
+        set
+        {
+            ProductNameToSearch = value;
+            if (!string.IsNullOrWhiteSpace(ProductNameToSearch) && ProductNameToSearch.Length > 2)
+            {
+                ViewProducts();
+            }
+        }
+    }
+    private List<Product>? products;
+    private Product? selectedProduct;
+    [Parameter]
+    public EventCallback<List<Product>> OnSearchProducts{ get; set; }
+    [Parameter]
+    public bool DisplaySearchResult { get; set; } = false;
+    [Parameter]
+    public EventCallback<Product> OnSelectProduct { get; set; }
+
+    //protected async override Task OnInitializedAsync()
+    //{
+    //    await ViewProducts();
+    //}
+    protected async Task ViewProducts()
+    {
+        var Products=(await ViewProductsByNameUseCase.ExecuteAsync(ProductNameToSearch??string.Empty)).ToList();
+        await OnSearchProducts.InvokeAsync(Products);
+        products = Products;
+        this.selectedProduct = null;
+        StateHasChanged();
+    }
+    public async Task SelectProduct(Product product)
+    {
+        await OnSelectProduct.InvokeAsync(product);
+        selectedProduct = product;
+    }
+}
